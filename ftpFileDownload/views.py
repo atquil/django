@@ -16,6 +16,8 @@ class GetClientInfoUsingTickerNameAndDate(APIView):
 
         # Validating If the parameters are correct
         if serializer.is_valid():
+
+            
             data = {
                 "clientName": "John Doe",
                 "tickerName": serializer.validated_data['ticker'],

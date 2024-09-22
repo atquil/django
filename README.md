@@ -235,4 +235,15 @@ urlpatterns = [
 
 ```
 
-###
+## Frontend to get the formData
+
+## Template for apps
+
+- Create a **template** folder in the `<appName>`, for which UI is being made
+- Create the `ftpFileDownload.html` file to add html codes
+
+```html
+
+```
+
+ - Note: **Point the url to the correct backend api's**

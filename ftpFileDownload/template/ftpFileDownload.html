@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Data</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Get Data</h2>
+        <form id="dataForm">
+            <div class="input-field">
+                <input type="text" id="date" name="date" required>
+                <label for="date">Date (YYYYMMDD)</label>
+            </div>
+            <div class="input-field">
+                <input type="text" id="ticker" name="ticker" required>
+                <label for="ticker">Ticker Name</label>
+            </div>
+            <button class="btn waves-effect waves-light" type="submit">Get Data</button>
+        </form>
+        <table class="highlight">
+            <thead>
+                <tr>
+                    <th>Client Name</th>
+                    <th>Ticker Name</th>
+                    <th>Date Created</th>
+                </tr>
+            </thead>
+            <tbody id="dataTable">
+            </tbody>
+        </table>
+    </div>
+    <script>
+        document.getElementById('dataForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const date = document.getElementById('date').value;
+            const ticker = document.getElementById('ticker').value;
+            fetch(`/api/get-data/?date=${date}&ticker=${ticker}`)
+                .then(response => response.json())
+                .then(data => {
+                    const table = document.getElementById('dataTable');
+                    table.innerHTML = `
+                        <tr>
+                            <td>${data.clientName}</td>
+                            <td>${data.tickerName}</td>
+                            <td>${data.datesCreated}</td>
+                        </tr>
+                    `;
+                })
+                .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>

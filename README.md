@@ -270,6 +270,7 @@ urlpatterns = [
             <button class="btn waves-effect waves-light" style="width: 100%;" onclick="fetchData()">
                 Get Data
             </button>
+            <div id="error-message" class="card-panel red lighten-2 white-text" style="display: none;"></div>
             <table id="data-table" class="highlight">
                 <thead>
                     <tr>
@@ -298,7 +299,12 @@ urlpatterns = [
                 const date = document.getElementById('date').value;
                 const ticker = document.getElementById('ticker').value;
                 fetch(`/api/ftp/get-client-data?date=${date}&ticker=${ticker}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         const tableBody = document.getElementById('data-table').getElementsByTagName('tbody')[0];
                         tableBody.innerHTML = '';
@@ -313,7 +319,12 @@ urlpatterns = [
                             <td>${data.datesCreated}</td>
                         `;
                     })
-                    .catch(error => console.error('Error:', error));
+                    .catch(error => {
+                        console.error('Error:', error);
+                        const errorMessage = document.getElementById('error-message');
+                        errorMessage.textContent = `Error Due to: ${error.message}`;
+                        errorMessage.style.display = 'block';
+                    });
             }
 
             function downloadFile(action, ticker, date, clientName) {
@@ -415,6 +426,7 @@ urlpatterns = [
             <button class="btn waves-effect waves-light" style="width: 100%;" onclick="fetchData()">
                 Get Data
             </button>
+            <div id="error-message" class="card-panel red lighten-2 white-text" style="display: none;"></div>
             <table id="data-table" class="highlight">
                 <thead>
                     <tr>
@@ -443,7 +455,12 @@ urlpatterns = [
                 const date = document.getElementById('date').value;
                 const ticker = document.getElementById('ticker').value;
                 fetch(`/api/ftp/get-client-data?date=${date}&ticker=${ticker}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         const tableBody = document.getElementById('data-table').getElementsByTagName('tbody')[0];
                         tableBody.innerHTML = '';
@@ -458,7 +475,12 @@ urlpatterns = [
                             <td>${data.datesCreated}</td>
                         `;
                     })
-                    .catch(error => console.error('Error:', error));
+                    .catch(error => {
+                        console.error('Error:', error);
+                        const errorMessage = document.getElementById('error-message');
+                        errorMessage.textContent = `Error Due to: ${error.message}`;
+                        errorMessage.style.display = 'block';
+                    });
             }
 
             function downloadFile(action, ticker, date, clientName) {
@@ -470,6 +492,7 @@ urlpatterns = [
         </script>
     </body>
     </html>
+
 
     ```
 

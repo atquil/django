@@ -73,7 +73,7 @@
                 .catch(error => {
                     console.error('Error:', error);
                     const errorMessage = document.getElementById('error-message');
-                    errorMessage.textContent = `An error occurred: ${error.message}`;
+                    errorMessage.textContent = `Error Due to: ${error.message}`;
                     errorMessage.style.display = 'block';
                 });
         }

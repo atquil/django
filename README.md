@@ -184,8 +184,10 @@ from rest_framework import serializers
 
 class ClientInfoSerializer(serializers.Serializer):
     # Validations are also added for the format
-    date = serializers.DateField(format='%y%m%d', input_formats=['%y%m%d'])
+    date = serializers.DateField(format='%Y-%m-%d', input_formats=['%Y-%m-%d'])
     ticker = serializers.CharField(max_length=10)
+
+
 
 ```
 
@@ -237,74 +239,156 @@ urlpatterns = [
 
 ## Frontend to get the formData
 
-### Template for apps : index.htmll
+### Template for apps : index.html
 
 - Create a **templates** folder in the `<appName>`, for which UI is being made
 - Create the `index.html` file to add html codes
 - `onclick="fetchClientData()"`: Once you click on the form, this function is called in **script**, which will inturn call the backend API
-  -   fetch(`/api/ftp/get-client-data/?date=${date}&ticker=${ticker}`) : By default it's get, so it will just call the api with parameters
+  
+-   fetch(`/api/ftp/get-client-data/?date=${date}&ticker=${ticker}`) : By default it's get, so it will just call the api with parameters
 ```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Get Data</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <title>FTP</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #3f51b5;
+        }
+        .mdc-text-field {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .mdc-button {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3f51b5;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h2>Get Data</h2>
-        <form id="dataForm">
-            <div class="input-field">
-                <input type="text" id="date" name="date" required>
-                <label for="date">Date (YYYYMMDD)</label>
-            </div>
-            <div class="input-field">
-                <input type="text" id="ticker" name="ticker" required>
-                <label for="ticker">Ticker Name</label>
-            </div>
-            <button class="btn waves-effect waves-light" type="submit" onclick="fetchClientData()" >Get Data</button>
-        </form>
-        <table class="highlight">
+        <h1>Client File Download</h1>
+        <label class="mdc-text-field mdc-text-field--outlined">
+            <input type="text" id="date" class="mdc-text-field__input" placeholder="YYYY-MM-DD">
+            <span class="mdc-notched-outline">
+                <span class="mdc-notched-outline__leading"></span>
+                <span class="mdc-notched-outline__notch">
+                    <span class="mdc-floating-label">Choose a date</span>
+                </span>
+                <span class="mdc-notched-outline__trailing"></span>
+            </span>
+        </label>
+        <label class="mdc-text-field mdc-text-field--outlined">
+            <input type="text" id="ticker" class="mdc-text-field__input" placeholder="Enter Ticker Name">
+            <span class="mdc-notched-outline">
+                <span class="mdc-notched-outline__leading"></span>
+                <span class="mdc-notched-outline__notch">
+                    <span class="mdc-floating-label">Ticker Name</span>
+                </span>
+                <span class="mdc-notched-outline__trailing"></span>
+            </span>
+        </label>
+        <button class="mdc-button mdc-button--raised" onclick="fetchData()">
+            <span class="mdc-button__label">Get Data</span>
+        </button>
+       <table id="data-table">
             <thead>
                 <tr>
+                    <th>Download Action</th>
                     <th>Client Name</th>
-                    <th>Ticker Name</th>
-                    <th>Date Created</th>
+                    <th>Index Ticker</th>
+                    <th>Index Name</th>
                 </tr>
             </thead>
-            <tbody id="dataTable">
-            </tbody>
+            <tbody></tbody>
         </table>
     </div>
+    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
-        function fetchClientData() {
-            event.preventDefault();
-            // Taking values from form using Id
+        mdc.textField.MDCTextField.attachTo(document.querySelector('.mdc-text-field'));
+        mdc.ripple.MDCRipple.attachTo(document.querySelector('.mdc-button'));
+
+        flatpickr("#date", {
+            dateFormat: "Y-m-d",
+            allowInput: true
+        });
+
+        function fetchData() {
             const date = document.getElementById('date').value;
             const ticker = document.getElementById('ticker').value;
-
-            // Calling the Get API, and appending the query parameter
-            // Note: Knowing the correct API is important-> <projectURLs>/<appUrls> : /api/ftp/get-client-data/
-            fetch(`/api/ftp/get-client-data/?date=${date}&ticker=${ticker}`)
+            fetch(`/api/ftp/get-client-data?date=${date}&ticker=${ticker}`)
                 .then(response => response.json())
                 .then(data => {
-                    const table = document.getElementById('dataTable');
-                    table.innerHTML = `
-                        <tr>
-                            <td>${data.clientName}</td>
-                            <td>${data.tickerName}</td>
-                            <td>${data.datesCreated}</td>
-                        </tr>
+                    const tableBody = document.getElementById('data-table').getElementsByTagName('tbody')[0];
+                    tableBody.innerHTML = '';
+                    console.log(data);
+                    const newRow = tableBody.insertRow();
+                    newRow.innerHTML = `
+                        <td class="action-buttons">
+                            <button class="mdc-button mdc-button--outlined" onclick="downloadFile('Opening', '${data.tickerName}', '${date}')">Opening</button>
+                            <button class="mdc-button mdc-button--outlined" onclick="downloadFile('Closing', '${data.tickerName}', '${date}')">Closing</button>
+                        </td>
+                        <td>${data.clientName}</td>
+                        <td>${data.tickerName}</td>
+                        <td>${data.datesCreated}</td>
                     `;
                 })
                 .catch(error => console.error('Error:', error));
-        });
+        }
+
+
+        function downloadFile(action, ticker, date) {
+            const fileName = `${action}-${ticker}-${date}`;
+            // Add your FTP download logic here
+            console.log(`Downloading ${fileName}`);
+        }
     </script>
+
 </body>
 </html>
-
 ```
 ### Modify the API, path
 
@@ -346,4 +430,4 @@ urlpatterns = [
     ```
 
 3. Run the server : `python manage.py runserver`
-4. Go to : <hotname>/api/ftp/ : for UI
+4. Go to : <hotname>/api/ftp/ -> for UI ```http://127.0.0.1:8000/api/ftp/```

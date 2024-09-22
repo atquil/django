@@ -18,7 +18,7 @@
                 <input type="text" id="ticker" name="ticker" required>
                 <label for="ticker">Ticker Name</label>
             </div>
-            <button class="btn waves-effect waves-light" type="submit">Get Data</button>
+            <button class="btn waves-effect waves-light" type="submit" onclick="fetchClientData()" >Get Data</button>
         </form>
         <table class="highlight">
             <thead>
@@ -33,24 +33,29 @@
         </table>
     </div>
     <script>
-        document.getElementById('dataForm').addEventListener('submit', function(event) {
-            event.preventDefault();
+         function fetchClientData() {
             const date = document.getElementById('date').value;
             const ticker = document.getElementById('ticker').value;
-            fetch(`/api/get-data/?date=${date}&ticker=${ticker}`)
+            fetch(`/api/ftp/get-client-data?date=${date}&ticker=${ticker}`)
                 .then(response => response.json())
                 .then(data => {
-                    const table = document.getElementById('dataTable');
-                    table.innerHTML = `
-                        <tr>
-                            <td>${data.clientName}</td>
-                            <td>${data.tickerName}</td>
-                            <td>${data.datesCreated}</td>
-                        </tr>
-                    `;
-                })
-                .catch(error => console.error('Error:', error));
-        });
+                    const tableBody = document.getElementById('data-table').getElementsByTagName('tbody')[0];
+                    tableBody.innerHTML = '';
+                    data.forEach(row => {
+                        const newRow = tableBody.insertRow();
+                        newRow.innerHTML = `
+                            <td class="action-buttons">
+                                <button class="mdc-button mdc-button--outlined" onclick="downloadFile('Opening', '${row.indexTicker}', '${date}')">Opening</button>
+                                <button class="mdc-button mdc-button--outlined" onclick="downloadFile('Closing', '${row.indexTicker}', '${date}')">Closing</button>
+                            </td>
+                            <td>${row.clientName}</td>
+                            <td>${row.indexTicker}</td>
+                            <td>${row.indexName}</td>
+                        `;
+                    });
+                });
+        }  
+    
     </script>
 </body>
 </html>

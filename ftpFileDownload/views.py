@@ -25,3 +25,9 @@ class GetClientInfoUsingTickerNameAndDate(APIView):
             }
             return Response(data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+# To add frontend url
+from django.shortcuts import render
+
+def index(request):
+    return render(request, 'index.html')

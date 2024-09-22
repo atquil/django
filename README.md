@@ -237,13 +237,113 @@ urlpatterns = [
 
 ## Frontend to get the formData
 
-## Template for apps
+### Template for apps : index.htmll
 
-- Create a **template** folder in the `<appName>`, for which UI is being made
-- Create the `ftpFileDownload.html` file to add html codes
-
+- Create a **templates** folder in the `<appName>`, for which UI is being made
+- Create the `index.html` file to add html codes
+- `onclick="fetchClientData()"`: Once you click on the form, this function is called in **script**, which will inturn call the backend API
+  -   fetch(`/api/ftp/get-client-data/?date=${date}&ticker=${ticker}`) : By default it's get, so it will just call the api with parameters
 ```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Data</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Get Data</h2>
+        <form id="dataForm">
+            <div class="input-field">
+                <input type="text" id="date" name="date" required>
+                <label for="date">Date (YYYYMMDD)</label>
+            </div>
+            <div class="input-field">
+                <input type="text" id="ticker" name="ticker" required>
+                <label for="ticker">Ticker Name</label>
+            </div>
+            <button class="btn waves-effect waves-light" type="submit" onclick="fetchClientData()" >Get Data</button>
+        </form>
+        <table class="highlight">
+            <thead>
+                <tr>
+                    <th>Client Name</th>
+                    <th>Ticker Name</th>
+                    <th>Date Created</th>
+                </tr>
+            </thead>
+            <tbody id="dataTable">
+            </tbody>
+        </table>
+    </div>
+    <script>
+        function fetchClientData() {
+            event.preventDefault();
+            // Taking values from form using Id
+            const date = document.getElementById('date').value;
+            const ticker = document.getElementById('ticker').value;
+
+            // Calling the Get API, and appending the query parameter
+            // Note: Knowing the correct API is important-> <projectURLs>/<appUrls> : /api/ftp/get-client-data/
+            fetch(`/api/ftp/get-client-data/?date=${date}&ticker=${ticker}`)
+                .then(response => response.json())
+                .then(data => {
+                    const table = document.getElementById('dataTable');
+                    table.innerHTML = `
+                        <tr>
+                            <td>${data.clientName}</td>
+                            <td>${data.tickerName}</td>
+                            <td>${data.datesCreated}</td>
+                        </tr>
+                    `;
+                })
+                .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>
 
 ```
+### Modify the API, path
 
- - Note: **Point the url to the correct backend api's**
+1. Add the file path to `<appName>/views.py`, so that it can be used to API redirection : **ftpFileDownload/views.py**
+    ```python
+        from rest_framework.views import APIView
+        from rest_framework.response import Response
+        from rest_framework import status
+
+        # Import file from .serializers file 
+        from .serializers import ClientInfoSerializer
+
+
+        # Api Routing on what it will do 
+        class GetClientInfoUsingTickerNameAndDate(APIView):
+
+        #.......
+            
+        # To add frontend url
+        from django.shortcuts import render
+
+        def index(request):
+            return render(request, 'index.html')
+    ```
+
+2. Now, we also need to define **index.html** path in app urls, so that it will be reachable
+
+   - Go to **<appName>.urls.py** and the path: **ftpFileDownload.py**
+    ```python
+        from django.urls import path
+
+        # Import the API that has been created, and configure the URLs
+        from .views import GetClientInfoUsingTickerNameAndDate,index
+
+        urlpatterns = [
+            path('get-client-data/', GetClientInfoUsingTickerNameAndDate.as_view(), name='get-client-data'),
+            path('', index, name='index'),
+        ]
+    ```
+
+3. Run the server : `python manage.py runserver`
+4. Go to : <hotname>/api/ftp/ : for UI

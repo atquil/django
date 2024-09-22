@@ -59,16 +59,20 @@
                 .then(data => {
                     const tableBody = document.getElementById('data-table').getElementsByTagName('tbody')[0];
                     tableBody.innerHTML = '';
-                    const newRow = tableBody.insertRow();
-                    newRow.innerHTML = `
-                        <td class="action-buttons">
-                            <button class="btn waves-effect waves-light" onclick="downloadFile('Opening', '${data.tickerName}', '${date}', '${data.clientName}')">Opening</button>
-                            <button class="btn waves-effect waves-light" onclick="downloadFile('Closing', '${data.tickerName}', '${date}', '${data.clientName}')">Closing</button>
-                        </td>
-                        <td>${data.clientName}</td>
-                        <td>${data.tickerName}</td>
-                        <td>${data.datesCreated}</td>
-                    `;
+
+                    // Iterate over each item in the data array
+                    data.forEach(item => {
+                        const newRow = tableBody.insertRow();
+                        newRow.innerHTML = `
+                            <td class="action-buttons">
+                                <button class="btn waves-effect waves-light" onclick="downloadFile('Opening', '${item.tickerName}', '${item.datesCreated}', '${item.clientName}')">Opening</button>
+                                <button class="btn waves-effect waves-light" onclick="downloadFile('Closing', '${item.tickerName}', '${item.datesCreated}', '${item.clientName}')">Closing</button>
+                            </td>
+                            <td>${item.clientName}</td>
+                            <td>${item.tickerName}</td>
+                            <td>${item.datesCreated}</td>
+                        `;
+                    });
                 })
                 .catch(error => {
                     console.error('Error:', error);

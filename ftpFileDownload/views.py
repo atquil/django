@@ -37,18 +37,18 @@ class GetClientInfoUsingTickerNameAndDate(APIView):
             ticker_name = serializer.validated_data['ticker']
 
             try:
-                with connections['external_db'].cursor() as cursor:
+                with connections['ftpDownload..'].cursor() as cursor:
                     cursor.execute("""
-                        SELECT client_name, ticker_name, date
+                        SELECT ClientName, indexTicker
                         FROM your_table_name
-                        WHERE date = %s AND ticker_name = %s
-                    """, [date, ticker_name])
+                        WHERE indexTicker = %s
+                    """, [ticker_name])
                     
                     rows = cursor.fetchall()
 
                 if rows:
                     data = [
-                        {'clientName': row[0], 'tickerName': row[1], 'datesCreated': row[2].strftime('%Y-%m-%d')}
+                        {'clientName': row[0], 'tickerName': row[1], 'datesCreated': date}
                         for row in rows
                     ]
                 else:

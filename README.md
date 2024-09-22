@@ -246,152 +246,89 @@ urlpatterns = [
 - `onclick="fetchData()"`: Once you click on the form, this function is called in **script**, which will inturn call the backend API
   
 -   fetch(`/api/ftp/get-client-data?date=${date}&ticker=${ticker}`) : By default it's get, so it will just call the api with parameters
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FTP</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    ```html
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Client File Download</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    </head>
+    <body>
+        <div class="container">
+            <h1>Client File Download</h1>
+            <div class="input-field">
+                <input type="text" id="date" class="datepicker" placeholder="Choose a date">
+                <label for="date">Choose a date</label>
+            </div>
+            <div class="input-field">
+                <input type="text" id="ticker" class="validate" placeholder="Enter Ticker Name">
+                <label for="ticker">Ticker Name</label>
+            </div>
+            <button class="btn waves-effect waves-light" style="width: 100%;" onclick="fetchData()">
+                Get Data
+            </button>
+            <table id="data-table" class="highlight">
+                <thead>
+                    <tr>
+                        <th>Download Action</th>
+                        <th>Client Name</th>
+                        <th>Index Ticker</th>
+                        <th>Index Name</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <iframe id="downloadFrame" style="display:none;"></iframe>
+        </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var elems = document.querySelectorAll('.datepicker');
+                var instances = M.Datepicker.init(elems, {
+                    format: 'yyyy-mm-dd',
+                    autoClose: true
+                });
+            });
 
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #3f51b5;
-        }
-        .mdc-text-field {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        .mdc-button {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #3f51b5;
-            color: white;
-        }
-        tr:hover {
-            background-color: #f1f1f1;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Client File Download</h1>
-        <label class="mdc-text-field mdc-text-field--outlined">
-            <input type="text" id="date" class="mdc-text-field__input" placeholder="YYYY-MM-DD">
-            <span class="mdc-notched-outline">
-                <span class="mdc-notched-outline__leading"></span>
-                <span class="mdc-notched-outline__notch">
-                    <span class="mdc-floating-label">Choose a date</span>
-                </span>
-                <span class="mdc-notched-outline__trailing"></span>
-            </span>
-        </label>
-        <label class="mdc-text-field mdc-text-field--outlined">
-            <input type="text" id="ticker" class="mdc-text-field__input" placeholder="Enter Ticker Name">
-            <span class="mdc-notched-outline">
-                <span class="mdc-notched-outline__leading"></span>
-                <span class="mdc-notched-outline__notch">
-                    <span class="mdc-floating-label">Ticker Name</span>
-                </span>
-                <span class="mdc-notched-outline__trailing"></span>
-            </span>
-        </label>
-        <button class="mdc-button mdc-button--raised" onclick="fetchData()">
-            <span class="mdc-button__label">Get Data</span>
-        </button>
-       <table id="data-table">
-            <thead>
-                <tr>
-                    <th>Download Action</th>
-                    <th>Client Name</th>
-                    <th>Index Ticker</th>
-                    <th>Index Name</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
-        mdc.textField.MDCTextField.attachTo(document.querySelector('.mdc-text-field'));
-        mdc.ripple.MDCRipple.attachTo(document.querySelector('.mdc-button'));
+            function fetchData() {
+                const date = document.getElementById('date').value;
+                const ticker = document.getElementById('ticker').value;
+                fetch(`/api/ftp/get-client-data?date=${date}&ticker=${ticker}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const tableBody = document.getElementById('data-table').getElementsByTagName('tbody')[0];
+                        tableBody.innerHTML = '';
+                        const newRow = tableBody.insertRow();
+                        newRow.innerHTML = `
+                            <td class="action-buttons">
+                                <button class="btn waves-effect waves-light" onclick="downloadFile('Opening', '${data.tickerName}', '${date}', '${data.clientName}')">Opening</button>
+                                <button class="btn waves-effect waves-light" onclick="downloadFile('Closing', '${data.tickerName}', '${date}', '${data.clientName}')">Closing</button>
+                            </td>
+                            <td>${data.clientName}</td>
+                            <td>${data.tickerName}</td>
+                            <td>${data.datesCreated}</td>
+                        `;
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
 
-        flatpickr("#date", {
-            dateFormat: "Y-m-d",
-            allowInput: true
-        });
+            function downloadFile(action, ticker, date, clientName) {
+                // Creating File Name based on clicked values
+                const fileName = `${action}-${ticker}-${date}`;
 
-        function fetchData() {
-            const date = document.getElementById('date').value;
-            const ticker = document.getElementById('ticker').value;
-            fetch(`/api/ftp/get-client-data?date=${date}&ticker=${ticker}`)
-                .then(response => response.json())
-                .then(data => {
-                    const tableBody = document.getElementById('data-table').getElementsByTagName('tbody')[0];
-                    tableBody.innerHTML = '';
-                    const newRow = tableBody.insertRow();
-                    newRow.innerHTML = `
-                        <td class="action-buttons">
-                            <button class="mdc-button mdc-button--outlined" onclick="downloadFile('Opening', '${data.tickerName}', '${date}','${data.clientName}')">Opening</button>
-                            <button class="mdc-button mdc-button--outlined" onclick="downloadFile('Closing', '${data.tickerName}', '${date}','${data.clientName}')">Closing</button>
-                        </td>
-                        <td>${data.clientName}</td>
-                        <td>${data.tickerName}</td>
-                        <td>${data.datesCreated}</td>
-                    `;
-                })
-                .catch(error => console.error('Error:', error));
-        }
+                console.log(`Downloading File ${fileName} for Client: ${clientName}`);
+                // Add your FTP download logic here
+                
+            }
+        </script>
 
-
-        function downloadFile(action, ticker, date, clientName) {
-            // Creating File Name based on clicked values
-            const fileName = `${action}-${ticker}-${date}`;
-
-            console.log(`Downloading File ${fileName} for Client: ${clientName}`);
-            // Add your FTP download logic here
-            
-        }
-    </script>
-
-</body>
-</html>
-```
+    </body>
+    </html>
+    ```
 ### Modify the API, path
 
 1. Add the file path to `<appName>/views.py`, so that it can be used to API redirection : **ftpFileDownload/views.py**
@@ -445,14 +382,11 @@ urlpatterns = [
     ```javascript
 
         function downloadFile(action, ticker, date, clientName) {
-                    // Creating File Name based on clicked values
-                    const fileName = `${action}-${ticker}-${date}`;
-
-                    console.log(`Downloading File ${fileName} for Client: ${clientName}`);
-                    // Add your FTP download logic here
-                    window.location.href = `/api/ftp/download/${fileName}/${clientName}/`;
-                    
-                }
+            const fileName = `${action}-${ticker}-${date}`;
+            console.log(`Downloading File ${fileName} for Client: ${clientName}`);
+            const downloadFrame = document.getElementById('downloadFrame');
+            downloadFrame.src = `/api/ftp/download/?fileName=${fileName}&clientName=${clientName}`;
+        }
     ```
 
     This is the whole file
@@ -463,88 +397,25 @@ urlpatterns = [
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>FTP</title>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-        <link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
+        <title>Client File Download</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-
-        <style>
-            body {
-                font-family: 'Roboto', sans-serif;
-                margin: 0;
-                padding: 20px;
-                background-color: #f5f5f5;
-            }
-            .container {
-                max-width: 800px;
-                margin: 0 auto;
-                background: #fff;
-                padding: 20px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
-            h1 {
-                text-align: center;
-                color: #3f51b5;
-            }
-            .mdc-text-field {
-                width: 100%;
-                margin-bottom: 20px;
-            }
-            .mdc-button {
-                width: 100%;
-                margin-bottom: 20px;
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 20px;
-            }
-            th, td {
-                padding: 12px;
-                text-align: left;
-                border-bottom: 1px solid #ddd;
-            }
-            th {
-                background-color: #3f51b5;
-                color: white;
-            }
-            tr:hover {
-                background-color: #f1f1f1;
-            }
-            .action-buttons {
-                display: flex;
-                gap: 10px;
-            }
-        </style>
     </head>
     <body>
         <div class="container">
             <h1>Client File Download</h1>
-            <label class="mdc-text-field mdc-text-field--outlined">
-                <input type="text" id="date" class="mdc-text-field__input" placeholder="YYYY-MM-DD">
-                <span class="mdc-notched-outline">
-                    <span class="mdc-notched-outline__leading"></span>
-                    <span class="mdc-notched-outline__notch">
-                        <span class="mdc-floating-label">Choose a date</span>
-                    </span>
-                    <span class="mdc-notched-outline__trailing"></span>
-                </span>
-            </label>
-            <label class="mdc-text-field mdc-text-field--outlined">
-                <input type="text" id="ticker" class="mdc-text-field__input" placeholder="Enter Ticker Name">
-                <span class="mdc-notched-outline">
-                    <span class="mdc-notched-outline__leading"></span>
-                    <span class="mdc-notched-outline__notch">
-                        <span class="mdc-floating-label">Ticker Name</span>
-                    </span>
-                    <span class="mdc-notched-outline__trailing"></span>
-                </span>
-            </label>
-            <button class="mdc-button mdc-button--raised" onclick="fetchData()">
-                <span class="mdc-button__label">Get Data</span>
+            <div class="input-field">
+                <input type="text" id="date" class="datepicker" placeholder="Choose a date">
+                <label for="date">Choose a date</label>
+            </div>
+            <div class="input-field">
+                <input type="text" id="ticker" class="validate" placeholder="Enter Ticker Name">
+                <label for="ticker">Ticker Name</label>
+            </div>
+            <button class="btn waves-effect waves-light" style="width: 100%;" onclick="fetchData()">
+                Get Data
             </button>
-        <table id="data-table">
+            <table id="data-table" class="highlight">
                 <thead>
                     <tr>
                         <th>Download Action</th>
@@ -555,16 +426,17 @@ urlpatterns = [
                 </thead>
                 <tbody></tbody>
             </table>
+            <iframe id="downloadFrame" style="display:none;"></iframe>
         </div>
-        <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
         <script>
-            mdc.textField.MDCTextField.attachTo(document.querySelector('.mdc-text-field'));
-            mdc.ripple.MDCRipple.attachTo(document.querySelector('.mdc-button'));
-
-            flatpickr("#date", {
-                dateFormat: "Y-m-d",
-                allowInput: true
+            document.addEventListener('DOMContentLoaded', function() {
+                var elems = document.querySelectorAll('.datepicker');
+                var instances = M.Datepicker.init(elems, {
+                    format: 'yyyy-mm-dd',
+                    autoClose: true
+                });
             });
 
             function fetchData() {
@@ -578,8 +450,8 @@ urlpatterns = [
                         const newRow = tableBody.insertRow();
                         newRow.innerHTML = `
                             <td class="action-buttons">
-                                <button class="mdc-button mdc-button--outlined" onclick="downloadFile('Opening', '${data.tickerName}', '${date}','${data.clientName}')">Opening</button>
-                                <button class="mdc-button mdc-button--outlined" onclick="downloadFile('Closing', '${data.tickerName}', '${date}','${data.clientName}')">Closing</button>
+                                <button class="btn waves-effect waves-light" onclick="downloadFile('Opening', '${data.tickerName}', '${date}', '${data.clientName}')">Opening</button>
+                                <button class="btn waves-effect waves-light" onclick="downloadFile('Closing', '${data.tickerName}', '${date}', '${data.clientName}')">Closing</button>
                             </td>
                             <td>${data.clientName}</td>
                             <td>${data.tickerName}</td>
@@ -589,20 +461,16 @@ urlpatterns = [
                     .catch(error => console.error('Error:', error));
             }
 
-
             function downloadFile(action, ticker, date, clientName) {
-                // Creating File Name based on clicked values
                 const fileName = `${action}-${ticker}-${date}`;
-
                 console.log(`Downloading File ${fileName} for Client: ${clientName}`);
-                // Add your FTP download logic here
-                window.location.href = `/api/ftp/download/${fileName}/${clientName}/`;
-                
+                const downloadFrame = document.getElementById('downloadFrame');
+                downloadFrame.src = `/api/ftp/download/?fileName=${fileName}&clientName=${clientName}`;
             }
         </script>
-
     </body>
     </html>
+
     ```
 
 2. In Serializer add the DTO to receive the input
@@ -631,6 +499,7 @@ urlpatterns = [
 - Add import for Serializer : `from .serializers import ClientInfoSerializer, FtpFileDownload`
 
 - Now add the API logic
+  
 ```python
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -707,4 +576,23 @@ class FTPDownloadView(APIView):
             except ftplib.all_errors as e:
                 return HttpResponse(f"FTP error: {str(e)}", status=500)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+```
+
+4. Add the URLs to download the file in **<appName>/urls.py** : `ftpFileDownload/urls.py`
+
+```python
+
+from django.urls import path
+
+# Import the API that has been created, and configure the URLs
+from .views import FTPDownloadView, GetClientInfoUsingTickerNameAndDate,index
+
+urlpatterns = [
+    path('get-client-data/', GetClientInfoUsingTickerNameAndDate.as_view(), name='get-client-data'),
+    path('', index, name='index'),
+
+    ## Added to redirect FTP Download
+    path('download/', FTPDownloadView.as_view(), name='ftp-download'),
+]
+
 ```

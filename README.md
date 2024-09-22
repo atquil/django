@@ -596,3 +596,25 @@ urlpatterns = [
 ]
 
 ```
+
+## Modify Getting of Data From Database: 
+
+1. Add database connection in **<projectName>/settings.py** : `djangoBasics/settings.py`
+
+```python
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    },
+    'ftpDownload_db': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'your_external_db',
+        'USER': 'your_external_user',
+        'PASSWORD': 'your_external_password',
+        'HOST': 'your_external_host',
+        'PORT': 'your_external_port',
+    }
+}
+```

@@ -115,12 +115,11 @@
                 .then(data => {
                     const tableBody = document.getElementById('data-table').getElementsByTagName('tbody')[0];
                     tableBody.innerHTML = '';
-                    console.log(data);
                     const newRow = tableBody.insertRow();
                     newRow.innerHTML = `
                         <td class="action-buttons">
-                            <button class="mdc-button mdc-button--outlined" onclick="downloadFile('Opening', '${data.tickerName}', '${date}')">Opening</button>
-                            <button class="mdc-button mdc-button--outlined" onclick="downloadFile('Closing', '${data.tickerName}', '${date}')">Closing</button>
+                            <button class="mdc-button mdc-button--outlined" onclick="downloadFile('Opening', '${data.tickerName}', '${date}','${data.clientName}')">Opening</button>
+                            <button class="mdc-button mdc-button--outlined" onclick="downloadFile('Closing', '${data.tickerName}', '${date}','${data.clientName}')">Closing</button>
                         </td>
                         <td>${data.clientName}</td>
                         <td>${data.tickerName}</td>
@@ -131,10 +130,14 @@
         }
 
 
-        function downloadFile(action, ticker, date) {
+        function downloadFile(action, ticker, date, clientName) {
+            // Creating File Name based on clicked values
             const fileName = `${action}-${ticker}-${date}`;
+
+            console.log(`Downloading File ${fileName} for Client: ${clientName}`);
             // Add your FTP download logic here
-            console.log(`Downloading ${fileName}`);
+            window.location.href = `/api/ftp/download/${fileName}/${clientName}/`;
+            
         }
     </script>
 

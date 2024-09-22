@@ -5,3 +5,8 @@ class ClientInfoSerializer(serializers.Serializer):
     date = serializers.DateField(format='%Y-%m-%d', input_formats=['%Y-%m-%d'])
     ticker = serializers.CharField(max_length=10)
 
+class FtpFileDownload(serializers.Serializer):
+    # Validations are also added for the format
+    fileName = serializers.CharField()
+    clientName = serializers.CharField()
+

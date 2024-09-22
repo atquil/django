@@ -636,24 +636,24 @@ from .serializers import ClientInfoSerializer, FtpFileDownload
 
 # Api Routing on what it will do 
 
-# class GetClientInfoUsingTickerNameAndDate(APIView):
+#class GetClientInfoUsingTickerNameAndDate(APIView):
 
-#     # Get API
-#     def get(self, request, format=None):
-#         # Extracting the query parameter
-#         serializer = ClientInfoSerializer(data=request.query_params)
+    # Get API
+    # def get(self, request, format=None):
+    #     # Extracting the query parameter
+    #     serializer = ClientInfoSerializer(data=request.query_params)
 
-#         # Validating If the parameters are correct
-#         if serializer.is_valid():
+    #     # Validating If the parameters are correct
+    #     if serializer.is_valid():
             
             
-#             data = {
-#                 "clientName": "John Doe",
-#                 "tickerName": serializer.validated_data['ticker'],
-#                 "datesCreated": serializer.validated_data['date'].strftime('%Y-%m-%d')
-#             }
-#             return Response(data, status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    #         data = {
+    #             "clientName": "John Doe",
+    #             "tickerName": serializer.validated_data['ticker'],
+    #             "datesCreated": serializer.validated_data['date'].strftime('%Y-%m-%d')
+    #         }
+    #         return Response(data, status=status.HTTP_200_OK)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class GetClientInfoUsingTickerNameAndDate(APIView):
 
@@ -680,19 +680,13 @@ class GetClientInfoUsingTickerNameAndDate(APIView):
                         for row in rows
                     ]
                 else:
-                    data = {
-                        "clientName": "John Doe",
-                        "tickerName": ticker_name,
-                        "datesCreated": date
-                    }
+                    data = []
                 return Response(data, status=status.HTTP_200_OK)
             except OperationalError as e:
-                data = {
-                    "clientName": "John Doe",
-                    "tickerName": ticker_name,
-                    "datesCreated": date
-                }
-                return Response(data, status=status.HTTP_200_OK)
+                return Response({
+                    "error": "Database connection error",
+                    "details": str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 # To add frontend url

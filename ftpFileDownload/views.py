@@ -1,29 +1,70 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-
+from django.db import connections, OperationalError
 # Import file from .serializers file 
 from .serializers import ClientInfoSerializer, FtpFileDownload
 
 
 # Api Routing on what it will do 
+
+# class GetClientInfoUsingTickerNameAndDate(APIView):
+
+#     # Get API
+#     def get(self, request, format=None):
+#         # Extracting the query parameter
+#         serializer = ClientInfoSerializer(data=request.query_params)
+
+#         # Validating If the parameters are correct
+#         if serializer.is_valid():
+            
+            
+#             data = {
+#                 "clientName": "John Doe",
+#                 "tickerName": serializer.validated_data['ticker'],
+#                 "datesCreated": serializer.validated_data['date'].strftime('%Y-%m-%d')
+#             }
+#             return Response(data, status=status.HTTP_200_OK)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class GetClientInfoUsingTickerNameAndDate(APIView):
 
-    # Get API
     def get(self, request, format=None):
-        # Extracting the query parameter
         serializer = ClientInfoSerializer(data=request.query_params)
 
-        # Validating If the parameters are correct
         if serializer.is_valid():
+            date = serializer.validated_data['date'].strftime('%Y-%m-%d')
+            ticker_name = serializer.validated_data['ticker']
 
-            
-            data = {
-                "clientName": "John Doe",
-                "tickerName": serializer.validated_data['ticker'],
-                "datesCreated": serializer.validated_data['date'].strftime('%Y-%m-%d')
-            }
-            return Response(data, status=status.HTTP_200_OK)
+            try:
+                with connections['external_db'].cursor() as cursor:
+                    cursor.execute("""
+                        SELECT client_name, ticker_name, date
+                        FROM your_table_name
+                        WHERE date = %s AND ticker_name = %s
+                    """, [date, ticker_name])
+                    
+                    rows = cursor.fetchall()
+
+                if rows:
+                    data = [
+                        {'clientName': row[0], 'tickerName': row[1], 'datesCreated': row[2].strftime('%Y-%m-%d')}
+                        for row in rows
+                    ]
+                else:
+                    data = {
+                        "clientName": "John Doe",
+                        "tickerName": ticker_name,
+                        "datesCreated": date
+                    }
+                return Response(data, status=status.HTTP_200_OK)
+            except OperationalError as e:
+                data = {
+                    "clientName": "John Doe",
+                    "tickerName": ticker_name,
+                    "datesCreated": date
+                }
+                return Response(data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 # To add frontend url

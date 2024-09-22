@@ -73,7 +73,7 @@ django-admin startproject djangoBasics .
 Moreover, we need to add component for this project. They are called using `startapp`. It represents, some component of the project. A project can have multiple `startapp` representing different features. 
 
 
-python manage.py startapp <name of component>
+python manage.py startapp <name of application>
 
 ```
 python manage.py startapp ftpFileDownload
@@ -148,7 +148,7 @@ Added step for CORS:
     Quit the server with CONTROL-C.
    ```
 4. Migrations are important to sync models with database even if it's not present let's do this. Also if you add any Models (Entity), we need to run migraiton to keep the project in sync
-   1. `python manage.py makemigrations <appname>`
+   1. `python manage.py makemigrations <appName>`
    
     ```
         $ python manage.py makemigrations ftpFileDownload 
@@ -168,4 +168,71 @@ Added step for CORS:
     Django version 5.1.1, using settings 'djangoBasics.settings'
     Starting development server at http://127.0.0.1:8000/
    ```
+
+## Coding Starts here
+
+
+### Create a Serializer (Java-DTO)
+
+Serializers behave just like a DTO for a particular app.
+- Location: `<appName>/serializers.py`
+
+- Add a  `ftpFileDownload/serializers.py` to mimic a dto, which will receive information from the API, using request parameter. 
+
+```python
+from rest_framework import serializers
+
+class ClientInfoSerializer(serializers.Serializer):
+    # Validations are also added for the format
+    date = serializers.DateField(format='%y%m%d', input_formats=['%y%m%d'])
+    ticker = serializers.CharField(max_length=10)
+
+```
+
+
+### Modify the VIEW (Java - Controller/Service)
+
+View helps us to define the API's.
+- Location : `<appName>/views.py`
+
+```
+
+```
+### Configure Application URLs using views.py
+
+Now, we need to reach to this particular app (Act as RestController)
+
+- Create or update file called : `<appName>/urls.py`
+
+```python
+
+from django.urls import path
+
+# Import the API that has been created, and configure the URLs
+from .views import GetClientInfoUsingTickerNameAndDate
+
+urlpatterns = [
+    path('get-client-data/', GetClientInfoUsingTickerNameAndDate.as_view(), name='get-client-data'),
+]
+```
+
+### Modify the Base Project for URLs
+
+- Go to `<ProjectName>/urls.py` to register the Application urls
+
+```python
+    from django.contrib import admin
+
+    # include, will help to point to other urls configurations for different pages
+    from django.urls import path, include
+
+    urlpatterns = [
+        path('admin/', admin.site.urls),
+        #Configuring the API, stating that all the URLS starting from api/ftp will be redirected to ftpFileDownload.urls
+        #Prefix: /api/ftp
+        path('api/ftp/',include('ftpFileDownload.urls'))
+    ]
+
+```
+
 ###

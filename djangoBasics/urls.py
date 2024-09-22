@@ -15,8 +15,13 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+
+# include, will help to point to other urls configurations for different pages
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    #Configuring the API, stating that all the URLS starting from api/ftp will be redirected to ftpFileDownload.urls
+    #Prefix: /api/ftp
+    path('api/ftp/',include('ftpFileDownload.urls'))
 ]

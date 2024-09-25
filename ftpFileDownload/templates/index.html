@@ -11,8 +11,8 @@
     <div class="container">
         <h1>Client File Download</h1>
         <div class="input-field">
-            <input type="text" id="date" class="datepicker" placeholder="Choose a date">
-            <label for="date">Choose a date</label>
+            <input type="text" id="date" class="datepicker" placeholder="Choose a date range">
+            <label for="date">Choose a date range</label>
         </div>
         <div class="input-field">
             <input type="text" id="ticker" class="validate" placeholder="Enter Ticker Name">
@@ -39,10 +39,12 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            var elems = document.querySelectorAll('.datepicker');
-            var instances = M.Datepicker.init(elems, {
-                format: 'yyyy-mm-dd',
-                autoClose: true
+            flatpickr("#date", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                onClose: function(selectedDates, dateStr, instance) {
+                    console.log(dateStr); // This will log the selected date range in YYYY-MM-DD format
+                }
             });
         });
 

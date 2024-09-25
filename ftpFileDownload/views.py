@@ -125,8 +125,8 @@ import ftplib
 from datetime import datetime, timedelta
 
 class FTPMultipleFileDownloadView(APIView):
-    def get(self, request, format=None):
-        serializer = MultipleClientFileDownloadSerializer(data=request.query_params)
+    def post(self, request, format=None):
+        serializer = MultipleClientFileDownloadSerializer(data=request.data)
 
         if serializer.is_valid():
             ticker_names = serializer.validated_data['tickerNames']
@@ -193,6 +193,7 @@ class FTPMultipleFileDownloadView(APIView):
             except ftplib.all_errors as e:
                 return JsonResponse({'error': f'FTP error: {str(e)}'}, status=500)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 

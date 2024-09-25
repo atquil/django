@@ -25,3 +25,12 @@ class FTPMultipleFileDownloadSerializer(serializers.Serializer):
     fileRequests = serializers.ListField(
         child=FileRequestSerializer()
     )
+
+class MultipleClientFileDownloadSerializer(serializers.Serializer):
+    tickerNames = serializers.ListField(
+        child=serializers.CharField(max_length=100)
+    )
+    dateRange = serializers.CharField(max_length=100)
+    fileType = serializers.CharField(max_length=10)
+
+    

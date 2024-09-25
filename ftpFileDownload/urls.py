@@ -8,5 +8,5 @@ urlpatterns = [
     path('get-ticker-and-client-data/', GetAllTickerAndClientCombination.as_view(), name='get-ticker-and-client-data'),
     path('', index, name='index'),
     path('download/', FTPDownloadView.as_view(), name='ftp-download'),
-     path('download-all/', FTPMultipleFileDownloadView.as_view(), name='ftp-download-all'),
+     path('multiple-client-file-download/', FTPMultipleFileDownloadView.as_view(), name='ftp-download-all'),
 ]

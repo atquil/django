@@ -6,6 +6,43 @@
     <title>Client File Download</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .btn-open {
+            background-color: #26a69a; /* Material Green */
+            width: 48%;
+        }
+        .btn-close {
+            background-color: #f44336; /* Material Red */
+            width: 48%;
+        }
+        .btn-close:hover {
+            background-color: #d32f2f; /* Darker Red on hover */
+        }
+        .chips-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .chip {
+            display: inline-block;
+            padding: 0 10px;
+            height: 32px;
+            font-size: 13px;
+            line-height: 32px;
+            border-radius: 16px;
+            background-color: #e0e0e0;
+            margin: 2px;
+        }
+        .chip .close {
+            cursor: pointer;
+            margin-left: 10px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -15,24 +52,19 @@
             <label for="date">Choose a date range</label>
         </div>
         <div class="input-field">
-            <input type="text" id="ticker" class="validate" placeholder="Enter Ticker Name">
-            <label for="ticker">Ticker Name</label>
+            <input type="text" id="ticker-input" placeholder="Enter Ticker Names">
+            <label for="ticker-input">Ticker Names</label>
+            <div id="chips-container" class="chips-container"></div>
         </div>
-        <button class="btn waves-effect waves-light" style="width: 100%;" onclick="fetchData()">
-            Get Data
-        </button>
+        <div class="btn-container">
+            <button class="btn waves-effect waves-light btn-open" onclick="submitData('opening')">
+                Opening
+            </button>
+            <button class="btn waves-effect waves-light btn-close" onclick="submitData('closing')">
+                Closing
+            </button>
+        </div>
         <div id="error-message" class="card-panel red lighten-2 white-text" style="display: none;"></div>
-        <table id="data-table" class="highlight">
-            <thead>
-                <tr>
-                    <th>Download Action</th>
-                    <th>Client Name</th>
-                    <th>Index Ticker</th>
-                    <th>Index Name</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
         <iframe id="downloadFrame" style="display:none;"></iframe>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
@@ -46,50 +78,64 @@
                     console.log(dateStr); // This will log the selected date range in YYYY-MM-DD format
                 }
             });
-        });
 
-        function fetchData() {
-            const date = document.getElementById('date').value;
-            const ticker = document.getElementById('ticker').value;
-            fetch(`/api/ftp/get-client-data?date=${date}&ticker=${ticker}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
+            const tickerInput = document.getElementById('ticker-input');
+            const chipsContainer = document.getElementById('chips-container');
+
+            tickerInput.addEventListener('keydown', function(event) {
+                if (event.key === ',') {
+                    event.preventDefault();
+                    addChip(tickerInput.value.trim());
+                    tickerInput.value = '';
+                }
+            });
+
+            function addChip(value) {
+                if (value) {
+                    const chip = document.createElement('div');
+                    chip.className = 'chip';
+                    chip.textContent = value;
+                    const closeBtn = document.createElement('span');
+                    closeBtn.className = 'close';
+                    closeBtn.textContent = '×';
+                    closeBtn.onclick = function() {
+                        chipsContainer.removeChild(chip);
+                    };
+                    chip.appendChild(closeBtn);
+                    chipsContainer.appendChild(chip);
+                }
+            }
+
+            function getChips() {
+                return Array.from(chipsContainer.children).map(chip => chip.textContent.slice(0, -1).replace(/\s+/g, ''));
+            }
+
+            window.submitData = function(action) {
+                const dateRange = document.getElementById('date').value;
+                const tickers = getChips();
+                const requestData = {
+                    dateRange: dateRange,
+                    fileType: action,
+                    tickerNames: tickers
+                };
+                console.log(requestData);
+
+                fetch('/api/ftp/multiple-client-file-download/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
                 })
+                .then(response => response.json())
                 .then(data => {
-                    const tableBody = document.getElementById('data-table').getElementsByTagName('tbody')[0];
-                    tableBody.innerHTML = '';
-
-                    // Iterate over each item in the data array
-                    data.forEach(item => {
-                        const newRow = tableBody.insertRow();
-                        newRow.innerHTML = `
-                            <td class="action-buttons">
-                                <button class="btn waves-effect waves-light" onclick="downloadFile('Opening', '${item.tickerName}', '${item.datesCreated}', '${item.clientName}')">Opening</button>
-                                <button class="btn waves-effect waves-light" onclick="downloadFile('Closing', '${item.tickerName}', '${item.datesCreated}', '${item.clientName}')">Closing</button>
-                            </td>
-                            <td>${item.clientName}</td>
-                            <td>${item.tickerName}</td>
-                            <td>${item.datesCreated}</td>
-                        `;
-                    });
+                    console.log('Success:', data);
                 })
-                .catch(error => {
+                .catch((error) => {
                     console.error('Error:', error);
-                    const errorMessage = document.getElementById('error-message');
-                    errorMessage.textContent = `Error Due to: ${error.message}`;
-                    errorMessage.style.display = 'block';
                 });
-        }
-
-        function downloadFile(action, ticker, date, clientName) {
-            const fileName = `${action}-${ticker}-${date}`;
-            console.log(`Downloading File ${fileName} for Client: ${clientName}`);
-            const downloadFrame = document.getElementById('downloadFrame');
-            downloadFrame.src = `/api/ftp/download/?fileName=${fileName}&clientName=${clientName}`;
-        }
+            };
+        });
     </script>
 </body>
 </html>

@@ -10,3 +10,18 @@ class FtpFileDownload(serializers.Serializer):
     fileName = serializers.CharField()
     clientName = serializers.CharField()
 
+# To take the information of ticker , clientName
+class TickerInformation(serializers.Serializer):
+    # Validations are also added for the format
+    ticker = serializers.CharField()
+    clientName = serializers.CharField()
+
+# To have List of Dictionary for clientName and FileName
+class FileRequestSerializer(serializers.Serializer):
+    clientName = serializers.CharField(max_length=100)
+    fileName = serializers.CharField(max_length=100)
+
+class FTPMultipleFileDownloadSerializer(serializers.Serializer):
+    fileRequests = serializers.ListField(
+        child=FileRequestSerializer()
+    )

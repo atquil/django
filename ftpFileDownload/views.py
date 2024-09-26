@@ -109,7 +109,9 @@ def generate_file_names(ticker_names, start_date, end_date, file_type, ticker_cl
     logger.info("Successfully generated file names.")
     return file_groups
 
-def download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password):
+
+import os
+def download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password, download_dir='downloads'):
     results = {
         'success': [],
         'failure': []
@@ -118,6 +120,10 @@ def download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password):
         ftp = ftplib.FTP(ftp_server)
         ftp.login(user=ftp_user, passwd=ftp_password)
         logger.info("Successfully connected to FTP server.")
+
+        if not os.path.exists(download_dir):
+            os.makedirs(download_dir)
+            logger.info(f"Created download directory: {download_dir}")
 
         for client_name, file_names in file_groups.items():
             ftp_directory = f'/path/to/files/{client_name}/'
@@ -132,11 +138,11 @@ def download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password):
                         continue
 
                     for file_to_download in matching_files:
-                        local_filename = f"{client_name}_{file_to_download}"
+                        local_filename = os.path.join(download_dir, f"{client_name}_{file_to_download}")
                         with open(local_filename, 'wb') as local_file:
                             ftp.retrbinary(f"RETR {file_to_download}", local_file.write)
                         results['success'].append({'clientName': client_name, 'fileName': file_to_download, 'status': 'Success'})
-                        logger.info(f"Successfully downloaded file: {file_to_download}")
+                        logger.info(f"Successfully downloaded file: {file_to_download} to {local_filename}")
             except ftplib.all_errors as e:
                 results['failure'].append({'clientName': client_name, 'fileName': file_name, 'status': f'FTP error: {str(e)}'})
                 logger.error(f"FTP error for client {client_name}: {str(e)}")

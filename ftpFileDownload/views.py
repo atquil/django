@@ -61,6 +61,7 @@ def index(request):
 
 def get_ticker_client_map(ticker_names):
     try:
+        logger.info("Successfully fetched ticker-client map.")
         # Create a string of placeholders for the query
         placeholders = ', '.join(['%s'] * len(ticker_names))
         query = f"""
@@ -131,10 +132,9 @@ def download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password):
                         continue
 
                     file_to_download = matching_files[0]
-                    response = HttpResponse(content_type='application/octet-stream')
-                    response['Content-Disposition'] = f'attachment; filename="{file_to_download}"'
-
-                    ftp.retrbinary(f"RETR {file_to_download}", response.write)
+                    local_filename = f"{client_name}_{file_to_download}"
+                    with open(local_filename, 'wb') as local_file:
+                        ftp.retrbinary(f"RETR {file_to_download}", local_file.write)
                     results['success'].append({'clientName': client_name, 'fileName': file_name, 'status': 'Success'})
                     logger.info(f"Successfully downloaded file: {file_to_download}")
             except ftplib.all_errors as e:

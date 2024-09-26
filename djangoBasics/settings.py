@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     #CORS Config : 
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -61,9 +62,6 @@ MIDDLEWARE = [
 
 # Add CORS config here
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_ORIGIN_WHITELIST = (
-        'http://localhost:8000',
-        ) 
 
 ROOT_URLCONF = 'djangoBasics.urls'
 

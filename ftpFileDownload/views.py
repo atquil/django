@@ -61,12 +61,16 @@ def index(request):
 
 def get_ticker_client_map(ticker_names):
     try:
+        # Create a string of placeholders for the query
+        placeholders = ', '.join(['%s'] * len(ticker_names))
+        query = f"""
+            SELECT indexTicker, ClientName
+            FROM your_table_name
+            WHERE indexTicker IN ({placeholders})
+        """
+
         with connections['ftpDownload'].cursor() as cursor:
-            cursor.execute("""
-                SELECT indexTicker, ClientName
-                FROM your_table_name
-                WHERE indexTicker IN %s
-            """, [tuple(ticker_names)])
+            cursor.execute(query, ticker_names)
             fetched_data = cursor.fetchall()
             ticker_client_map = {row[0]: row[1] for row in fetched_data}
 
@@ -80,6 +84,7 @@ def get_ticker_client_map(ticker_names):
     except Exception as e:
         logger.error(f"Error fetching ticker-client map: {str(e)}")
         return None
+
 
 
 def generate_file_names(ticker_names, start_date, end_date, file_type, ticker_client_map):

@@ -118,7 +118,9 @@ def download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password):
 
         def ftp_stream(file_to_download):
             def stream():
-                ftp.retrbinary(f"RETR {file_to_download}", lambda data: yield data)
+                def callback(data):
+                    yield data
+                ftp.retrbinary(f"RETR {file_to_download}", callback)
             return stream
 
         for client_name, file_names in file_groups.items():
@@ -148,7 +150,6 @@ def download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password):
     except ftplib.all_errors as e:
         logger.error(f"FTP connection error: {str(e)}")
         return JsonResponse({'error': f'FTP error: {str(e)}'}, status=500)
-
 
 class FTPMultipleFileDownloadView(APIView):
     def post(self, request, format=None):

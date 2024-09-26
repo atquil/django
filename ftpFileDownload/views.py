@@ -131,12 +131,12 @@ def download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password):
                         logger.warning(f"File not found: {file_name}")
                         continue
 
-                    file_to_download = matching_files[0]
-                    local_filename = f"{client_name}_{file_to_download}"
-                    with open(local_filename, 'wb') as local_file:
-                        ftp.retrbinary(f"RETR {file_to_download}", local_file.write)
-                    results['success'].append({'clientName': client_name, 'fileName': file_name, 'status': 'Success'})
-                    logger.info(f"Successfully downloaded file: {file_to_download}")
+                    for file_to_download in matching_files:
+                        local_filename = f"{client_name}_{file_to_download}"
+                        with open(local_filename, 'wb') as local_file:
+                            ftp.retrbinary(f"RETR {file_to_download}", local_file.write)
+                        results['success'].append({'clientName': client_name, 'fileName': file_to_download, 'status': 'Success'})
+                        logger.info(f"Successfully downloaded file: {file_to_download}")
             except ftplib.all_errors as e:
                 results['failure'].append({'clientName': client_name, 'fileName': file_name, 'status': f'FTP error: {str(e)}'})
                 logger.error(f"FTP error for client {client_name}: {str(e)}")

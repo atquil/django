@@ -1,5 +1,5 @@
 from rest_framework.views import APIView
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from rest_framework import status
 from django.db import connections
 from .serializers import  MultipleClientFileDownloadSerializer
@@ -109,47 +109,45 @@ def generate_file_names(ticker_names, start_date, end_date, file_type, ticker_cl
     logger.info("Successfully generated file names.")
     return file_groups
 
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
+def download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password):
+    try:
+        ftp = ftplib.FTP(ftp_server)
+        ftp.login(user=ftp_user, passwd=ftp_password)
+        logger.info("Successfully connected to FTP server.")
 
-from django.http import StreamingHttpResponse
-def download_files_from_ftp(self, file_groups, ftp_server, ftp_user, ftp_password):
-        try:
-            ftp = ftplib.FTP(ftp_server)
-            ftp.login(user=ftp_user, passwd=ftp_password)
-            logger.info("Successfully connected to FTP server.")
+        def ftp_stream(file_to_download):
+            def stream():
+                ftp.retrbinary(f"RETR {file_to_download}", lambda data: yield data)
+            return stream
 
-            def file_iterator(file_path):
-                with open(file_path, 'rb') as file:
-                    while chunk := file.read(8192):
-                        yield chunk
+        for client_name, file_names in file_groups.items():
+            ftp_directory = f'/path/to/files/{client_name}/'
+            try:
+                ftp.cwd(ftp_directory)
+                files = ftp.nlst()
+                for file_name in file_names:
+                    matching_files = [f for f in files if f.startswith(file_name)]
+                    if not matching_files:
+                        logger.warning(f"File not found: {file_name}")
+                        continue
 
-            for client_name, file_names in file_groups.items():
-                ftp_directory = f'/path/to/files/{client_name}/'
-                try:
-                    ftp.cwd(ftp_directory)
-                    files = ftp.nlst()
-                    for file_name in file_names:
-                        matching_files = [f for f in files if f.startswith(file_name)]
-                        if not matching_files:
-                            logger.warning(f"File not found: {file_name}")
-                            continue
+                    for file_to_download in matching_files:
+                        response = StreamingHttpResponse(
+                            ftp_stream(file_to_download)(),
+                            content_type='application/octet-stream'
+                        )
+                        response['Content-Disposition'] = f'attachment; filename="{file_to_download}"'
+                        logger.info(f"Successfully prepared file for download: {file_to_download}")
+                        return response
+            except ftplib.all_errors as e:
+                logger.error(f"FTP error for client {client_name}: {str(e)}")
 
-                        for file_to_download in matching_files:
-                            response = StreamingHttpResponse(
-                                ftp.retrbinary(f"RETR {file_to_download}", lambda data: data),
-                                content_type='application/octet-stream'
-                            )
-                            response['Content-Disposition'] = f'attachment; filename="{file_to_download}"'
-                            logger.info(f"Successfully prepared file for download: {file_to_download}")
-                            return response
-                except ftplib.all_errors as e:
-                    logger.error(f"FTP error for client {client_name}: {str(e)}")
-
-            ftp.quit()
-            logger.info("FTP session closed.")
-        except ftplib.all_errors as e:
-            logger.error(f"FTP connection error: {str(e)}")
-            return JsonResponse({'error': f'FTP error: {str(e)}'}, status=500)
-
+        ftp.quit()
+        logger.info("FTP session closed.")
+    except ftplib.all_errors as e:
+        logger.error(f"FTP connection error: {str(e)}")
+        return JsonResponse({'error': f'FTP error: {str(e)}'}, status=500)
 
 
 class FTPMultipleFileDownloadView(APIView):
@@ -178,7 +176,8 @@ class FTPMultipleFileDownloadView(APIView):
             for file in file_groups:
                 logger.info("File Data"+file)
             
-            return self.download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password)
+            return download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 

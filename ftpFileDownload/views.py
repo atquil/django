@@ -109,7 +109,7 @@ def generate_file_names(ticker_names, start_date, end_date, file_type, ticker_cl
     logger.info("Successfully generated file names.")
     return file_groups
 
-from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
+from django.http import StreamingHttpResponse
 def download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password):
     try:
         ftp = ftplib.FTP(ftp_server)

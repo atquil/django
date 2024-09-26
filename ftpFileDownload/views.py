@@ -5,116 +5,12 @@ from django.db import connections, OperationalError
 # Import file from .serializers file 
 from .serializers import ClientInfoSerializer, FTPMultipleFileDownloadSerializer, FtpFileDownload, MultipleClientFileDownloadSerializer
 
-
-# Api Routing on what it will do 
-
-#class GetClientInfoUsingTickerNameAndDate(APIView):
-
-    # Get API
-    # def get(self, request, format=None):
-    #     # Extracting the query parameter
-    #     serializer = ClientInfoSerializer(data=request.query_params)
-
-    #     # Validating If the parameters are correct
-    #     if serializer.is_valid():
-            
-            
-    #         data = {
-    #             "clientName": "John Doe",
-    #             "tickerName": serializer.validated_data['ticker'],
-    #             "datesCreated": serializer.validated_data['date'].strftime('%Y-%m-%d')
-    #         }
-    #         return Response(data, status=status.HTTP_200_OK)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class GetAllTickerAndClientCombination(APIView):
-
-    def get(self, request, format=None):
-
-        # Dummy data for testing
-        dummy_data = [
-            {'clientName': 'ClientA', 'tickerName': 'TickerA'},
-            {'clientName': 'ClientB', 'tickerName': 'TickerB'},
-            {'clientName': 'ClientC', 'tickerName': 'TickerC'},
-        ]
-        return Response(dummy_data, status=status.HTTP_200_OK)
-        # Get all the clientName
-        try:
-            with connections['ftpDownload..'].cursor() as cursor:
-                cursor.execute("""
-                    SELECT ClientName, indexTicker
-                    FROM your_table_name
-                """)
-                
-                rows = cursor.fetchall()
-
-            if rows:
-                data = [
-                    {'clientName': row[0], 'tickerName': row[1]}
-                    for row in rows
-                ]
-            else:
-                data = []
-            return Response(data, status=status.HTTP_200_OK)
-        except OperationalError as e:
-            return Response({
-                "error": "Database connection error",
-                "details": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-
-class GetClientInfoUsingTickerNameAndDate(APIView):
-
-    def get(self, request, format=None):
-        serializer = ClientInfoSerializer(data=request.query_params)
-
-        if serializer.is_valid():
-            date = serializer.validated_data['date'].strftime('%Y-%m-%d')
-            ticker_name = serializer.validated_data['ticker']
-
-            try:
-                with connections['ftpDownload..'].cursor() as cursor:
-                    cursor.execute("""
-                        SELECT ClientName
-                        FROM your_table_name
-                        WHERE indexTicker = %s
-                    """, [ticker_name])
-                    
-                    rows = cursor.fetchall()
-
-                if rows:
-                    data = [
-                        {'clientName': row[0], 'tickerName': row[1], 'datesCreated': date}
-                        for row in rows
-                    ]
-                else:
-                    data = []
-                return Response(data, status=status.HTTP_200_OK)
-            except OperationalError as e:
-                return Response({
-                    "error": "Database connection error",
-                    "details": str(e)
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-# To add frontend url
-from django.shortcuts import render
-
-def index(request):
-    return render(request, 'index.html')
-
-
-
-# For downloading FTP Files 
-
+ 
+#Download Multiple file based on client and fileName { {clientName:"abc", "fileName":"abc"}}
 import ftplib
 from django.http import HttpResponse, JsonResponse
 
-#Download Multiple file based on client and fileName { {clientName:"abc", "fileName":"abc"}}
+
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -123,6 +19,153 @@ from django.http import JsonResponse, HttpResponse
 from django.db import connections
 import ftplib
 from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Download Single File 
+# class FTPDownloadView(APIView):
+#     def get(self, request, format=None):
+#         serializer = FtpFileDownload(data=request.query_params)
+
+#         if serializer.is_valid():
+#             clientName = serializer.validated_data['clientName']
+
+#             # FTP Related Data
+#             fileName = serializer.validated_data['fileName']
+#             ftp_directory = f'/path/to/files/{clientName}/'
+#             ftp_server = 'ftp.example.com'
+#             ftp_user = 'your_username'
+#             ftp_password = 'your_password'
+
+#             try:
+#                 ftp = ftplib.FTP(ftp_server)
+#                 ftp.login(user=ftp_user, passwd=ftp_password)
+#                 ftp.cwd(ftp_directory)
+
+
+
+#                 files = ftp.nlst()
+
+#                 matching_files = [f for f in files if f.startswith(fileName)]
+#                 if not matching_files:
+#                     return HttpResponse("File not found", status=404)
+
+#                 file_to_download = matching_files[0]
+#                 response = HttpResponse(content_type='application/octet-stream')
+#                 response['Content-Disposition'] = f'attachment; filename="{file_to_download}"'
+
+#                 ftp.retrbinary(f"RETR {file_to_download}", response.write)
+#                 ftp.quit()
+#                 return response
+#             except ftplib.all_errors as e:
+#                 return HttpResponse(f"FTP error: {str(e)}", status=500)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+# def get_ticker_client_map(ticker_names):
+#     try:
+#         # Dummy data for testing
+#         dummy_data = {
+#             'TICKER1': 'ClientA',
+#             'TICKER2': 'ClientA',  # Same client as TICKER1
+#             'TICKER3': 'ClientB',
+#             'TICKER4': 'ClientC'
+#         }
+        
+#         # Filter the dummy data to include only the requested ticker names
+#         ticker_client_map = {ticker: dummy_data[ticker] for ticker in ticker_names if ticker in dummy_data}
+        
+#         logger.info("Returning dummy ticker-client map for testing.")
+#         return ticker_client_map
+#     except Exception as e:
+#         logger.error(f"Error fetching ticker-client map: {str(e)}")
+#         return None
+
+def get_ticker_client_map(ticker_names):
+    try:
+        with connections['ftpDownload'].cursor() as cursor:
+            cursor.execute("""
+                SELECT indexTicker, ClientName
+                FROM your_table_name
+                WHERE indexTicker IN %s
+            """, [tuple(ticker_names)])
+            fetched_data = cursor.fetchall()
+            ticker_client_map = {row[0]: row[1] for row in fetched_data}
+
+        # Check for missing ticker names
+        missing_tickers = [ticker for ticker in ticker_names if ticker not in ticker_client_map]
+        if missing_tickers:
+            logger.warning(f"Ticker names not found: {missing_tickers}")
+
+        logger.info("Successfully fetched ticker-client map.")
+        return ticker_client_map
+    except Exception as e:
+        logger.error(f"Error fetching ticker-client map: {str(e)}")
+        return None
+
+
+def generate_file_names(ticker_names, start_date, end_date, file_type, ticker_client_map):
+    file_groups = {}
+    for ticker_name in ticker_names:
+        client_name = ticker_client_map.get(ticker_name)
+        if not client_name:
+            logger.warning(f"Client name not found for ticker: {ticker_name}")
+            continue
+
+        file_names = []
+        current_date = start_date
+        while current_date <= end_date:
+            file_name = f"{file_type}-{ticker_name}-{current_date.strftime('%Y-%m-%d')}"
+            file_names.append(file_name)
+            current_date += timedelta(days=1)
+
+        if client_name not in file_groups:
+            file_groups[client_name] = []
+        file_groups[client_name].extend(file_names)
+    logger.info("Successfully generated file names.")
+    return file_groups
+
+def download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password):
+    results = {
+        'success': [],
+        'failure': []
+    }
+    try:
+        ftp = ftplib.FTP(ftp_server)
+        ftp.login(user=ftp_user, passwd=ftp_password)
+        logger.info("Successfully connected to FTP server.")
+
+        for client_name, file_names in file_groups.items():
+            ftp_directory = f'/path/to/files/{client_name}/'
+            try:
+                ftp.cwd(ftp_directory)
+                files = ftp.nlst()
+                for file_name in file_names:
+                    matching_files = [f for f in files if f.startswith(file_name)]
+                    if not matching_files:
+                        results['failure'].append({'clientName': client_name, 'fileName': file_name, 'status': 'File not found'})
+                        logger.warning(f"File not found: {file_name}")
+                        continue
+
+                    file_to_download = matching_files[0]
+                    response = HttpResponse(content_type='application/octet-stream')
+                    response['Content-Disposition'] = f'attachment; filename="{file_to_download}"'
+
+                    ftp.retrbinary(f"RETR {file_to_download}", response.write)
+                    results['success'].append({'clientName': client_name, 'fileName': file_name, 'status': 'Success'})
+                    logger.info(f"Successfully downloaded file: {file_to_download}")
+            except ftplib.all_errors as e:
+                results['failure'].append({'clientName': client_name, 'fileName': file_name, 'status': f'FTP error: {str(e)}'})
+                logger.error(f"FTP error for client {client_name}: {str(e)}")
+
+        ftp.quit()
+        logger.info("FTP session closed.")
+    except ftplib.all_errors as e:
+        logger.error(f"FTP connection error: {str(e)}")
+        return {'error': f'FTP error: {str(e)}'}, 500
+    return results, 200
+
 
 class FTPMultipleFileDownloadView(APIView):
     def post(self, request, format=None):
@@ -141,97 +184,22 @@ class FTPMultipleFileDownloadView(APIView):
             ftp_user = 'your_username'
             ftp_password = 'your_password'
 
-            results = []
+            ticker_client_map = get_ticker_client_map(ticker_names)
+            if ticker_client_map is None:
+                return JsonResponse({'error': 'Error fetching ticker-client map'}, status=500)
 
-            try:
-                ftp = ftplib.FTP(ftp_server)
-                ftp.login(user=ftp_user, passwd=ftp_password)
+            file_groups = generate_file_names(ticker_names, start_date, end_date, file_type, ticker_client_map)
+            logger.info("----------File Data-----------")
+            for file in file_groups:
+                logger.info("File Data"+file)
+            
+            results, status_code = download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password)
 
-                # Fetch client names and ticker names in a single query
-                with connections['ftpDownload'].cursor() as cursor:
-                    cursor.execute("""
-                        SELECT indexTicker, ClientName
-                        FROM your_table_name
-                        WHERE indexTicker IN %s
-                    """, [tuple(ticker_names)])
-                    ticker_client_map = {row[0]: row[1] for row in cursor.fetchall()}
-
-                for ticker_name in ticker_names:
-                    client_name = ticker_client_map.get(ticker_name)
-                    if not client_name:
-                        results.append({'tickerName': ticker_name, 'status': 'Client name not found'})
-                        continue
-
-                    file_names = []
-                    current_date = start_date
-                    while current_date <= end_date:
-                        file_name = f"{file_type}-{ticker_name}-{current_date.strftime('%Y-%m-%d')}"
-                        file_names.append(file_name)
-                        current_date += timedelta(days=1)
-
-                    for file_name in file_names:
-                        ftp_directory = f'/path/to/files/{client_name}/'
-                        try:
-                            ftp.cwd(ftp_directory)
-                            files = ftp.nlst()
-                            matching_files = [f for f in files if f.startswith(file_name)]
-                            if not matching_files:
-                                results.append({'clientName': client_name, 'fileName': file_name, 'status': 'File not found'})
-                                continue
-
-                            file_to_download = matching_files[0]
-                            response = HttpResponse(content_type='application/octet-stream')
-                            response['Content-Disposition'] = f'attachment; filename="{file_to_download}"'
-
-                            ftp.retrbinary(f"RETR {file_to_download}", response.write)
-                            results.append({'clientName': client_name, 'fileName': file_name, 'status': 'Success'})
-                        except ftplib.all_errors as e:
-                            results.append({'clientName': client_name, 'fileName': file_name, 'status': f'FTP error: {str(e)}'})
-
-                ftp.quit()
-                return JsonResponse(results, safe=False)
-            except ftplib.all_errors as e:
-                return JsonResponse({'error': f'FTP error: {str(e)}'}, status=500)
+            return JsonResponse(results, safe=False, status=status_code)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+### Final Code need these things.     
+# To add frontend url
+from django.shortcuts import render
 
-
-
-
-# Download Single File 
-class FTPDownloadView(APIView):
-    def get(self, request, format=None):
-        serializer = FtpFileDownload(data=request.query_params)
-
-        if serializer.is_valid():
-            clientName = serializer.validated_data['clientName']
-
-            # FTP Related Data
-            fileName = serializer.validated_data['fileName']
-            ftp_directory = f'/path/to/files/{clientName}/'
-            ftp_server = 'ftp.example.com'
-            ftp_user = 'your_username'
-            ftp_password = 'your_password'
-
-            try:
-                ftp = ftplib.FTP(ftp_server)
-                ftp.login(user=ftp_user, passwd=ftp_password)
-                ftp.cwd(ftp_directory)
-
-
-
-                files = ftp.nlst()
-
-                matching_files = [f for f in files if f.startswith(fileName)]
-                if not matching_files:
-                    return HttpResponse("File not found", status=404)
-
-                file_to_download = matching_files[0]
-                response = HttpResponse(content_type='application/octet-stream')
-                response['Content-Disposition'] = f'attachment; filename="{file_to_download}"'
-
-                ftp.retrbinary(f"RETR {file_to_download}", response.write)
-                ftp.quit()
-                return response
-            except ftplib.all_errors as e:
-                return HttpResponse(f"FTP error: {str(e)}", status=500)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def index(request):
+    return render(request, 'index.html')

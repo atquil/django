@@ -1,27 +1,23 @@
 from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.db import connections, OperationalError
-# Import file from .serializers file 
-from .serializers import ClientInfoSerializer, FTPMultipleFileDownloadSerializer, FtpFileDownload, MultipleClientFileDownloadSerializer
-
- 
-#Download Multiple file based on client and fileName { {clientName:"abc", "fileName":"abc"}}
-import ftplib
 from django.http import HttpResponse, JsonResponse
-
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
-from django.http import JsonResponse, HttpResponse
 from django.db import connections
+from .serializers import  MultipleClientFileDownloadSerializer
 import ftplib
 from datetime import datetime, timedelta
 import logging
+from rest_framework.response import Response
+
+from django.shortcuts import render
 
 logger = logging.getLogger(__name__)
+
+
+
+# To map frontEnd
+def index(request):
+    return render(request, 'index.html')
+
 
 # Download Single File 
 # class FTPDownloadView(APIView):
@@ -62,25 +58,6 @@ logger = logging.getLogger(__name__)
 #                 return HttpResponse(f"FTP error: {str(e)}", status=500)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
-# def get_ticker_client_map(ticker_names):
-#     try:
-#         # Dummy data for testing
-#         dummy_data = {
-#             'TICKER1': 'ClientA',
-#             'TICKER2': 'ClientA',  # Same client as TICKER1
-#             'TICKER3': 'ClientB',
-#             'TICKER4': 'ClientC'
-#         }
-        
-#         # Filter the dummy data to include only the requested ticker names
-#         ticker_client_map = {ticker: dummy_data[ticker] for ticker in ticker_names if ticker in dummy_data}
-        
-#         logger.info("Returning dummy ticker-client map for testing.")
-#         return ticker_client_map
-#     except Exception as e:
-#         logger.error(f"Error fetching ticker-client map: {str(e)}")
-#         return None
 
 def get_ticker_client_map(ticker_names):
     try:
@@ -197,9 +174,6 @@ class FTPMultipleFileDownloadView(APIView):
 
             return JsonResponse(results, safe=False, status=status_code)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-### Final Code need these things.     
-# To add frontend url
-from django.shortcuts import render
 
-def index(request):
-    return render(request, 'index.html')
+
+

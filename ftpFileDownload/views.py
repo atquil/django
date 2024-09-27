@@ -167,7 +167,7 @@ def download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password, dow
                         continue
 
                     for file_to_download in matching_files:
-                        local_filename = os.path.join(download_dir, f"{client_name}_{file_to_download}")
+                        local_filename = os.path.join(download_dir, f"{file_to_download}")
                         with open(local_filename, 'wb') as local_file:
                             ftp.retrbinary(f"RETR {file_to_download}", local_file.write)
                         results['success'].append({'clientName': client_name, 'fileName': file_to_download, 'status': 'Success'})

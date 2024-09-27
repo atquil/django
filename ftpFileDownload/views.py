@@ -138,47 +138,84 @@ class FTPMultipleFileDownloadView(APIView):
             return self.download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def download_files_from_ftp(self, file_groups, ftp_server, ftp_user, ftp_password):
-        try:
-            ftp = ftplib.FTP(ftp_server)
-            ftp.login(user=ftp_user, passwd=ftp_password)
-            logger.info("Successfully connected to FTP server.")
 
-            def ftp_stream(file_to_download):
-                def stream():
-                    with ftp.transfercmd(f"RETR {file_to_download}") as conn:
-                        while True:
-                            data = conn.recv(8192)
-                            if not data:
-                                break
-                            yield data
-                return stream
+import os
+def download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password, download_dir='downloads'):
+    results = {
+        'success': [],
+        'failure': []
+    }
+    try:
+        ftp = ftplib.FTP(ftp_server)
+        ftp.login(user=ftp_user, passwd=ftp_password)
+        logger.info("Successfully connected to FTP server.")
 
-            for client_name, file_names in file_groups.items():
-                ftp_directory = f'/path/to/files/{client_name}/'
-                try:
-                    ftp.cwd(ftp_directory)
-                    files = ftp.nlst()
-                    for file_name in file_names:
-                        matching_files = [f for f in files if f.startswith(file_name)]
-                        if not matching_files:
-                            logger.warning(f"File not found: {file_name}")
-                            continue
+        if not os.path.exists(download_dir):
+            os.makedirs(download_dir)
+            logger.info(f"Created download directory: {download_dir}")
 
-                        for file_to_download in matching_files:
-                            response = StreamingHttpResponse(
-                                ftp_stream(file_to_download)(),
-                                content_type='application/octet-stream'
-                            )
-                            response['Content-Disposition'] = f'attachment; filename="{file_to_download}"'
-                            logger.info(f"Successfully prepared file for download: {file_to_download}")
-                            return response
-                except ftplib.all_errors as e:
-                    logger.error(f"FTP error for client {client_name}: {str(e)}")
+        for client_name, file_names in file_groups.items():
+            ftp_directory = f'/path/to/files/{client_name}/'
+            try:
+                ftp.cwd(ftp_directory)
+                files = ftp.nlst()
+                for file_name in file_names:
+                    matching_files = [f for f in files if f.startswith(file_name)]
+                    if not matching_files:
+                        results['failure'].append({'clientName': client_name, 'fileName': file_name, 'status': 'File not found'})
+                        logger.warning(f"File not found: {file_name}")
+                        continue
 
-            ftp.quit()
-            logger.info("FTP session closed.")
-        except ftplib.all_errors as e:
-            logger.error(f"FTP connection error: {str(e)}")
-            return JsonResponse({'error': f'FTP error: {str(e)}'}, status=500)
+                    for file_to_download in matching_files:
+                        local_filename = os.path.join(download_dir, f"{client_name}_{file_to_download}")
+                        with open(local_filename, 'wb') as local_file:
+                            ftp.retrbinary(f"RETR {file_to_download}", local_file.write)
+                        results['success'].append({'clientName': client_name, 'fileName': file_to_download, 'status': 'Success'})
+                        logger.info(f"Successfully downloaded file: {file_to_download} to {local_filename}")
+            except ftplib.all_errors as e:
+                results['failure'].append({'clientName': client_name, 'fileName': file_name, 'status': f'FTP error: {str(e)}'})
+                logger.error(f"FTP error for client {client_name}: {str(e)}")
+
+        ftp.quit()
+        logger.info("FTP session closed.")
+    except ftplib.all_errors as e:
+        logger.error(f"FTP connection error: {str(e)}")
+        return {'error': f'FTP error: {str(e)}'}, 500
+    return results, 200
+
+
+class FTPMultipleFileDownloadView(APIView):
+    def post(self, request, format=None):
+        serializer = MultipleClientFileDownloadSerializer(data=request.data)
+
+        if serializer.is_valid():
+            ticker_names = serializer.validated_data['tickerNames']
+            date_range = serializer.validated_data['dateRange']
+            file_type = serializer.validated_data['fileType']
+
+            start_date, end_date = date_range.split(' to ')
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')
+
+            ftp_server = 'ftp.example.com'
+            ftp_user = 'your_username'
+            ftp_password = 'your_password'
+
+            ticker_client_map = get_ticker_client_map(ticker_names)
+            if ticker_client_map is None:
+                return JsonResponse({'error': 'Error fetching ticker-client map'}, status=500)
+
+            file_groups = generate_file_names(ticker_names, start_date, end_date, file_type, ticker_client_map)
+            logger.info("----------File Data-----------")
+            for file in file_groups:
+                logger.info("File Data"+file)
+            
+            results, status_code = download_files_from_ftp(file_groups, ftp_server, ftp_user, ftp_password)
+
+            return JsonResponse(results, safe=False, status=status_code)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
         
